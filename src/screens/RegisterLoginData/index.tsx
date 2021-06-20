@@ -33,10 +33,12 @@ export function RegisterLoginData() {
     control,
     handleSubmit,
     reset,
-    formState: {
-      errors
-    }
-  } = useForm();
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(schema)
+  });
+
+  const loginsKey = '@passmanager:logins';
 
   async function handleRegister(formData: FormData) {
     const newLoginData = {
@@ -44,7 +46,22 @@ export function RegisterLoginData() {
       ...formData
     }
 
-    // Save data on AsyncStorage
+    try {
+      const loadedData = await AsyncStorage.getItem(loginsKey);
+      const data = loadedData ? JSON.parse(loadedData) : [];
+
+      const newData = [
+          ...data,
+          newLoginData
+      ];
+
+      await AsyncStorage.setItem(loginsKey, JSON.stringify(newData));
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Não foi possível salvar os dados no storage');
+    }
+
+    reset();
   }
 
   return (
@@ -60,9 +77,7 @@ export function RegisterLoginData() {
           <Input
             title="Título"
             name="title"
-            error={
-              // message error here
-            }
+            error={errors.title && errors.title.message}
             control={control}
             placeholder="Escreva o título aqui"
             autoCapitalize="sentences"
@@ -71,9 +86,7 @@ export function RegisterLoginData() {
           <Input
             title="Email"
             name="email"
-            error={
-              // message error here
-            }
+            error={errors.email && errors.email.message}
             control={control}
             placeholder="Escreva o Email aqui"
             autoCorrect={false}
@@ -83,9 +96,7 @@ export function RegisterLoginData() {
           <Input
             title="Senha"
             name="password"
-            error={
-              // message error here
-            }
+            error={errors.password && errors.password.message}
             control={control}
             secureTextEntry
             placeholder="Escreva a senha aqui"
